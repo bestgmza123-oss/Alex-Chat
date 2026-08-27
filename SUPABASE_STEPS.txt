@@ -1,0 +1,19 @@
+=== ทำใน Supabase Dashboard ===
+
+1. ปิด Email Confirmation (ถ้าเปิดอยู่จะ login ไม่ได้):
+   → Authentication → Providers → Email
+   → เปลี่ยน "Confirm email" เป็น OFF
+   → กด Save
+
+2. แก้ Redirect URLs:
+   → Authentication → URL Configuration
+   → Site URL: https://alex-chat-mu.vercel.app
+   → Redirect URLs: เพิ่ม https://alex-chat-mu.vercel.app/**
+   → กด Save
+
+3. กลับไปที่เว็บ https://alex-chat-mu.vercel.app
+   → ใส่ PIN 1234
+   → ไปที่ /login หรือ /signup
+   → สมัครด้วย email + password
+   → Login เข้าไป
+   → ค่อยลองสร้าง group / โพสต์

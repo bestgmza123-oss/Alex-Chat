@@ -64,15 +64,15 @@ export default function GroupsPage() {
     if (!userId || !newGroupName.trim()) return;
     setCreating(true); setError(null);
 
-    const { data: chat, error: chatErr } = await supabase
-      .from("chats").insert({ created_by: userId, is_group: true, name: newGroupName.trim() })
-      .select("id").single();
-
-    if (chatErr || !chat) { setCreating(false); setError(chatErr?.message ?? t("channels_create_error")); return; }
-
     const code = generateInviteCode();
-    await supabase.from("groups").insert({ chat_id: chat.id, invite_code: code, created_by: userId });
-    await supabase.from("chat_members").insert({ chat_id: chat.id, user_id: userId });
+    const { data: chatId, error: chatErr } = await supabase
+      .rpc("create_group_with_member", {
+        p_created_by: userId,
+        p_name: newGroupName.trim(),
+        p_invite_code: code,
+      });
+
+    if (chatErr || !chatId) { setCreating(false); setError(chatErr?.message ?? t("channels_create_error")); return; }
 
     setCreating(false);
     setSuccess(t("groups_created") + code);
@@ -96,7 +96,7 @@ export default function GroupsPage() {
 
     if (existing) { setJoining(false); window.location.href = `/groups/${group.chat_id}`; return; }
 
-    const { error: joinErr } = await supabase.from("chat_members").insert({ chat_id: group.chat_id, user_id: userId });
+    const { error: joinErr } = await supabase.rpc("join_chat", { p_chat_id: group.chat_id, p_user_id: userId });
     setJoining(false);
     if (joinErr) { setError(joinErr.message); return; }
     window.location.href = `/groups/${group.chat_id}`;

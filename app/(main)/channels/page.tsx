@@ -132,28 +132,24 @@ export default function ChannelsPage() {
           }
         }
       }
-    }
+    }    // Create new DM using SECURITY DEFINER function (bypasses RLS)
+    const { data: chatId, error: createErr } = await supabase
+      .rpc("create_chat_with_member", {
+        p_created_by: userId,
+        p_is_group: false,
+      });
 
-    // Create new DM
-    const { data: newChat, error: createErr } = await supabase
-      .from("chats")
-      .insert({ created_by: userId, is_group: false })
-      .select("id")
-      .single();
-
-    if (createErr || !newChat) {
+    if (createErr || !chatId) {
       setSearching(false);
       setError(t("channels_create_error"));
       return;
     }
 
-    await supabase.from("chat_members").insert([
-      { chat_id: newChat.id, user_id: userId },
-      { chat_id: newChat.id, user_id: targetId },
-    ]);
+    // Add the other member using SECURITY DEFINER function
+    await supabase.rpc("join_chat", { p_chat_id: chatId, p_user_id: targetId });
 
     setSearching(false);
-    window.location.href = `/channels/${newChat.id}`;
+    window.location.href = `/channels/${chatId}`;
   }
 
   if (userLoading) {
