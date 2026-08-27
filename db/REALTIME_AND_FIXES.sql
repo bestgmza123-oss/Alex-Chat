@@ -1,10 +1,20 @@
--- Enable realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS posts;
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS notifications;
+-- Enable realtime (use DO block to handle if already added)
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE posts;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 ALTER TABLE posts ALTER COLUMN expires_at DROP NOT NULL;
 
--- RPC functions (bypass RLS)
+-- RPC functions
 CREATE OR REPLACE FUNCTION create_post(p_user_id uuid, p_image_url text, p_caption text, p_expires_at timestamptz DEFAULT NULL)
 RETURNS uuid AS $$ DECLARE v_id uuid; BEGIN
   INSERT INTO posts (user_id, image_url, caption, expires_at) VALUES (p_user_id, p_image_url, p_caption, p_expires_at) RETURNING id INTO v_id; RETURN v_id;
