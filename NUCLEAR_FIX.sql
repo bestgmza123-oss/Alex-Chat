@@ -9,9 +9,13 @@ DO $$ DECLARE r RECORD; BEGIN
   END LOOP;
 END $$;
 
+-- DROP storage policies that depend on is_chat_member
+DROP POLICY IF EXISTS "chat_media_read" ON storage.objects;
+DROP POLICY IF EXISTS "chat_media_insert" ON storage.objects;
+
 -- DROP old functions
 DROP TRIGGER IF EXISTS trg_avatar_limit ON profiles;
-DROP FUNCTION IF EXISTS is_chat_member(uuid);
+DROP FUNCTION IF EXISTS is_chat_member(uuid) CASCADE;
 DROP FUNCTION IF EXISTS enforce_avatar_limit();
 DROP FUNCTION IF EXISTS delete_expired_messages();
 
