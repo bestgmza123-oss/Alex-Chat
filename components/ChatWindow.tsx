@@ -359,62 +359,47 @@ export default function ChatWindow({
                     ) : (
                       /* Normal text with @mentions + link previews */
                       <div>
-                        <p className="whitespace-pre-wrap break-words">
+                        <div className="whitespace-pre-wrap break-words">
                           {(() => {
                             const linkParts = parseLinks(m.content);
                             return linkParts.map((part, i) => {
                               if (typeof part === "string") {
-                                // Parse @mentions within plain text
+                                // Code blocks
+                                if (part.includes("```")) {
+                                  const codeParts = part.split(/```/);
+                                  return codeParts.map((cp, ci) => {
+                                    if (ci % 2 === 1) {
+                                      return <pre key={ci} className="bg-bg/50 border border-border rounded p-2 my-1 text-xs overflow-x-auto"><code>{cp}</code></pre>;
+                                    }
+                                    return cp ? <span key={ci}>{cp}</span> : null;
+                                  });
+                                }
+                                // Inline code
+                                if (part.includes("`")) {
+                                  const icParts = part.split(/`/);
+                                  return icParts.map((ip, ii) => {
+                                    if (ii % 2 === 1) {
+                                      return <code key={ii} className="bg-panel-raised px-1 rounded text-cyan text-[11px] border border-border cursor-pointer" onClick={() => navigator.clipboard.writeText(ip)} title="Click to copy">{ip}</code>;
+                                    }
+                                    return ip ? <span key={ii}>{ip}</span> : null;
+                                  });
+                                }
                                 const mentionParts = parseMentions(part);
                                 return mentionParts.map((mp, j) => {
                                   if (typeof mp === "string") return <span key={`${i}-${j}`}>{mp}</span>;
-                                  return (
-                                    <Link
-                                      key={`${i}-${j}`}
-                                      href={`/profile`}
-                                      className="text-cyan font-bold hover:underline"
-                                    >
-                                      @{mp.mention}
-                                    </Link>
-                                  );
+                                  return <Link key={`${i}-${j}`} href={"/profile/" + mp.mention} className="text-cyan font-bold hover:underline">@{mp.mention}</Link>;
                                 });
                               }
-                              // Embed link
                               if (part.type === "youtube" && part.embed) {
-                                return (
-                                  <iframe
-                                    key={i}
-                                    src={part.embed}
-                                    className="w-full h-40 rounded mt-1 border border-border"
-                                    allowFullScreen
-                                    title="YouTube embed"
-                                  />
-                                );
+                                return <iframe key={i} src={part.embed} className="w-full h-40 rounded mt-1 border border-border" allowFullScreen title="YouTube embed" />;
                               }
                               if (part.type === "gif") {
-                                return (
-                                  <img
-                                    key={i}
-                                    src={part.embed}
-                                    alt="GIF"
-                                    className="max-h-48 rounded mt-1"
-                                  />
-                                );
+                                return <img key={i} src={part.embed} alt="GIF" className="max-h-48 rounded mt-1" />;
                               }
-                              return (
-                                <a
-                                  key={i}
-                                  href={part.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-cyan underline hover:text-cyan/80 text-xs"
-                                >
-                                  {part.url.length > 50 ? part.url.slice(0, 50) + "..." : part.url}
-                                </a>
-                              );
+                              return <a key={i} href={part.url} target="_blank" rel="noopener noreferrer" className="text-cyan underline hover:text-cyan/80 text-xs">{part.url.length > 50 ? part.url.slice(0, 50) + "..." : part.url}</a>;
                             });
                           })()}
-                        </p>
+                        </div>
                       </div>
                     )}
                   </div>
