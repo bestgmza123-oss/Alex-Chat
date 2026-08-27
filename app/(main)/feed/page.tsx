@@ -177,17 +177,12 @@ export default function FeedPage() {
       ? new Date(Date.now() + 10 * 60 * 1000).toISOString()
       : null;
 
-    const { error: postErr } = await supabase.from("posts").insert({
-      user_id: userId,
-      image_url: imagePath || null,
-      caption: caption.trim(),
-      expires_at: expiresAt,
+    const { error: postErr } = await supabase.rpc("create_post", {
+      p_user_id: userId, p_image_url: imagePath || "", p_caption: caption.trim(), p_expires_at: expiresAt,
     });
-
     setUploading(false);
-    setCaption("");
-    setShowComposer(false);
-    if (postErr) setError(postErr.message);
+    if (postErr) { setError(postErr.message); return; }
+    setCaption(""); setShowComposer(false);
   }
 
   async function deletePost(postId: string, imageUrl: string) {

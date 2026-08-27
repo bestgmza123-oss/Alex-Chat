@@ -15,6 +15,7 @@ type NavItem = {
 };
 
 const ITEMS: NavItem[] = [
+  { href: "/chats", labelKey: "nav_channels", icon: ChatIcon },
   { href: "/channels", labelKey: "nav_channels", icon: NodeIcon },
   { href: "/groups", labelKey: "nav_groups", icon: GroupIcon },
   { href: "/feed", labelKey: "nav_feed", icon: FeedIcon },
@@ -124,6 +125,14 @@ export default function NavBar() {
 
 /* ═══ SVG Icons — straight-line terminal aesthetic ═══ */
 
+
+function ChatIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+      <path d="M2 3h12v8H4l-2 2V3z" />
+    </svg>
+  );
+}
 function NodeIcon({ active }: { active?: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
