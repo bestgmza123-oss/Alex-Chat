@@ -72,6 +72,7 @@ const en: TranslationKeys = {
   "login_signup_link": "REGISTER",
   "login_title": "OPERATOR LOGIN",
   "nav_channels": "CHANNELS",
+  "nav_chats": "CHATS",
   "nav_feed": "FEED",
   "nav_groups": "GROUPS",
   "nav_ident": "IDENT",

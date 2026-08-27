@@ -10,12 +10,12 @@ import { createClient } from "@/lib/supabase/client";
 
 type NavItem = {
   href: string;
-  labelKey: "nav_channels" | "nav_groups" | "nav_feed" | "nav_ident";
+  labelKey: "nav_chats" | "nav_channels" | "nav_groups" | "nav_feed" | "nav_ident";
   icon: (p: { active?: boolean }) => JSX.Element;
 };
 
 const ITEMS: NavItem[] = [
-  { href: "/chats", labelKey: "nav_channels", icon: ChatIcon },
+  { href: "/chats", labelKey: "nav_chats", icon: ChatIcon },
   { href: "/channels", labelKey: "nav_channels", icon: NodeIcon },
   { href: "/groups", labelKey: "nav_groups", icon: GroupIcon },
   { href: "/feed", labelKey: "nav_feed", icon: FeedIcon },
