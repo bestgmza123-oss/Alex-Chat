@@ -200,11 +200,7 @@ export default function FeedPage() {
     if (!userId || !shareChatId) return;
     const shareText = post.caption || "Check out this post";
     const shareUrl = post.image_url ? (publicUrls[post.image_url] || "") : "";
-    await supabase.from("messages").insert({
-      chat_id: shareChatId,
-      sender_id: userId,
-      type: "text",
-      content: shareUrl ? `${shareText}\n${shareUrl}` : shareText,
+    await supabase.rpc("send_message", { p_chat_id: shareChatId, p_sender_id: userId, p_type: "text", p_content: shareUrl ? `${shareText}\n${shareUrl}` : shareText,
     });
     setShareChatId(null);
   }

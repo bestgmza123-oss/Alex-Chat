@@ -48,22 +48,12 @@ export default function MessageCountdown({
 
   return (
     <span className={`inline-flex items-center gap-1 text-xs ${color} font-body`}>
-      <svg width="14" height="14" viewBox="0 0 14 14" className="shrink-0">
-        <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2" />
-        <circle
-          cx="7"
-          cy="7"
-          r="6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray={2 * Math.PI * 6}
-          strokeDashoffset={2 * Math.PI * 6 * (1 - pct)}
-          strokeLinecap="round"
-          transform="rotate(-90 7 7)"
-        />
+      <svg width="16" height="16" viewBox="0 0 16 16" className="shrink-0">
+        <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1.5" />
+        <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray={2 * Math.PI * 7} strokeDashoffset={2 * Math.PI * 7 * (1 - pct)} strokeLinecap="round" transform="rotate(-90 8 8)" />
+        <circle cx="8" cy="8" r="1.5" fill="currentColor" />
       </svg>
-      ⏳ {mm}:{ss}
+      {mm}:{ss}
     </span>
   );
 }

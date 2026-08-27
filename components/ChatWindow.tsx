@@ -231,12 +231,7 @@ export default function ChatWindow({
     setText("");
     setShowMentions(false);
 
-    const { error: sendErr } = await supabase.from("messages").insert({
-      chat_id: chatId,
-      sender_id: userId,
-      type: "text",
-      content: body,
-    });
+    const { error: sendErr } = await supabase.rpc("send_message", { p_chat_id: chatId, p_sender_id: userId, p_type: "text", p_content: body });
 
     // Create notifications for @mentions
     const mentionRegex = /@(\w+)/g;
@@ -270,12 +265,7 @@ export default function ChatWindow({
     const path = chatMediaPath(chatId, file.name);
     const { error: uploadErr } = await supabase.storage.from("chat-media").upload(path, file);
     if (uploadErr) { setError(uploadErr.message); return; }
-    const { error: sendErr } = await supabase.from("messages").insert({
-      chat_id: chatId,
-      sender_id: userId,
-      type: isVideo ? "video" : "image",
-      media_url: path,
-    });
+    const { error: sendErr } = await supabase.rpc("send_message", { p_chat_id: chatId, p_sender_id: userId, p_type: isVideo ? "video" : "image", p_media_url: path });
     if (sendErr) setError(sendErr.message);
   }
 
@@ -470,7 +460,7 @@ export default function ChatWindow({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/*,.gif"
+          accept="image/*,video/*,.gif,.webp,.png,.jpg,.jpeg,.bmp,.tiff"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
