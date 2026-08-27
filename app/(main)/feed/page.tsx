@@ -28,6 +28,8 @@ export default function FeedPage() {
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const [showComposer, setShowComposer] = useState(false);
   const [postType, setPostType] = useState<"permanent" | "expiring">("permanent");
+  const [shareChatId, setShareChatId] = useState<string | null>(null);
+  const [myChats, setMyChats] = useState<{ id: string; name?: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,8 +55,12 @@ export default function FeedPage() {
             .in("post_id", postIds);
 
           const likedSet = new Set(likes?.map((l) => l.post_id) ?? []);
+          // Count likes per post
+          const likeCounts: Record<string, number> = {};
+          likes?.forEach((l) => { likeCounts[l.post_id] = (likeCounts[l.post_id] ?? 0) + 1; });
           postsData.forEach((p) => {
             p.user_liked = likedSet.has(p.id);
+            p.like_count = likeCounts[p.id] ?? 0;
           });
         }
         setPosts(postsData);
@@ -149,17 +155,22 @@ export default function FeedPage() {
     }
   }
 
-  async function uploadPost(file: File) {
+  async function uploadPost(file?: File) {
     if (!userId) return;
+    if (!file && !caption.trim()) return;
     setUploading(true);
     setError(null);
 
-    const path = postImagePath(userId, file.name);
-    const { error: uploadErr } = await supabase.storage.from("post-images").upload(path, file);
-    if (uploadErr) {
-      setUploading(false);
-      setError(uploadErr.message);
-      return;
+    let imagePath = "";
+    if (file) {
+      const path = postImagePath(userId, file.name);
+      const { error: uploadErr } = await supabase.storage.from("post-images").upload(path, file);
+      if (uploadErr) {
+        setUploading(false);
+        setError(uploadErr.message);
+        return;
+      }
+      imagePath = path;
     }
 
     const expiresAt = postType === "expiring"
@@ -168,7 +179,7 @@ export default function FeedPage() {
 
     const { error: postErr } = await supabase.from("posts").insert({
       user_id: userId,
-      image_url: path,
+      image_url: imagePath || null,
       caption: caption.trim(),
       expires_at: expiresAt,
     });
@@ -182,8 +193,32 @@ export default function FeedPage() {
   async function deletePost(postId: string, imageUrl: string) {
     if (!userId) return;
     await supabase.from("posts").delete().eq("id", postId);
-    await supabase.storage.from("post-images").remove([imageUrl]);
+    if (imageUrl) await supabase.storage.from("post-images").remove([imageUrl]);
   }
+
+  async function shareToChat(post: PostWithAuthor) {
+    if (!userId || !shareChatId) return;
+    const shareText = post.caption || "Check out this post";
+    const shareUrl = post.image_url ? (publicUrls[post.image_url] || "") : "";
+    await supabase.from("messages").insert({
+      chat_id: shareChatId,
+      sender_id: userId,
+      type: "text",
+      content: shareUrl ? `${shareText}\n${shareUrl}` : shareText,
+    });
+    setShareChatId(null);
+  }
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("chat_members").select("chat_id").eq("user_id", userId).then(({ data }) => {
+      if (!data) return;
+      const ids = data.map((m) => m.chat_id);
+      supabase.from("chats").select("id, name").in("id", ids).then(({ data: chats }) => {
+        if (chats) setMyChats(chats);
+      });
+    });
+  }, [userId, supabase]);
 
   // Check for expired posts and remove them
   useEffect(() => {
@@ -287,6 +322,14 @@ export default function FeedPage() {
               {uploading ? t("feed_uploading") : t("feed_select_image")}
             </button>
             <button
+              type="button"
+              disabled={uploading || !caption.trim()}
+              onClick={() => uploadPost()}
+              className="flex-1 border border-magenta text-magenta px-3 py-2 rounded text-xs tracking-widest hover:bg-magenta hover:text-bg transition disabled:opacity-40"
+            >
+              {uploading ? "..." : t("gen_post")}
+            </button>
+            <button
               onClick={() => setShowComposer(false)}
               className="px-3 py-2 text-xs text-muted border border-border rounded hover:border-magenta/30 hover:text-magenta transition"
             >
@@ -319,17 +362,17 @@ export default function FeedPage() {
           {posts.map((post) => (
             <div key={post.id} className="cyber-card overflow-hidden hover-lift">
               {/* Image */}
-              {publicUrls[post.image_url] ? (
+              {post.image_url && publicUrls[post.image_url] ? (
                 <img
                   src={publicUrls[post.image_url]}
                   alt={post.caption || ""}
                   className="w-full max-h-[500px] object-cover"
                 />
-              ) : (
+              ) : post.image_url ? (
                 <div className="w-full h-48 bg-panel flex items-center justify-center text-muted text-xs">
                   {t("gen_loading")}
                 </div>
-              )}
+              ) : null}
 
               {/* Post footer */}
               <div className="px-4 py-3">
@@ -352,6 +395,13 @@ export default function FeedPage() {
                     {post.like_count ?? 0} {t("feed_likes")}
                   </span>
 
+                  <button
+                    onClick={() => setShareChatId(shareChatId === post.id ? null : post.id)}
+                    className="text-muted hover:text-cyan transition text-[10px]"
+                    title="Share to chat"
+                  >
+                    ↗
+                  </button>
                   {post.user_id === userId && (
                     <button
                       onClick={() => deletePost(post.id, post.image_url)}
@@ -359,6 +409,17 @@ export default function FeedPage() {
                     >
                       {t("feed_delete")}
                     </button>
+                  )}
+                  {shareChatId === post.id && myChats.length > 0 && (
+                    <div className="w-full mt-2 flex flex-wrap gap-1">
+                      {myChats.map((chat) => (
+                        <button key={chat.id} onClick={() => shareToChat({ ...post } as PostWithAuthor)}
+                          className="text-[9px] border border-cyan/30 rounded px-2 py-1 text-cyan hover:bg-cyan/10 transition"
+                        >
+                          {chat.name || "DM"}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
 
